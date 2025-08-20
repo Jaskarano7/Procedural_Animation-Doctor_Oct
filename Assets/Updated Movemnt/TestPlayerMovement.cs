@@ -10,7 +10,11 @@ public class TestPlayerMovement : MonoBehaviour
     public float stepSpeed = 5f;
     public float legDistance = 2f;
     public float stepHeight = 0.5f;
+    public float backIdle = 1f;
+    public float restThreshold = 1f;
+    public bool shouldResetArms = true;
     public List<Arm> arms;
+
 
     private bool isStepping = false;
     private int nextLegIndex = 0;
@@ -72,18 +76,31 @@ public class TestPlayerMovement : MonoBehaviour
     #region Leg Logic
     private void UpdateLegs()
     {
+        Vector2 input = action.Movement.Move.ReadValue<Vector2>();
+
+        // Find the arm that is farthest from where it wants to go
+        int farthestArmIndex = GetFarthestArmIndex(-input);
+
         for (int i = 0; i < arms.Count; i++)
         {
             var arm = arms[i];
 
-            if (i == nextLegIndex)
+            // Only the farthest arm will try to step
+            if (i == farthestArmIndex && !isStepping)
             {
-                Vector2 input = action.Movement.Move.ReadValue<Vector2>();
-                if (!isStepping) CastParabolaRay(arm, -input);
+                CastParabolaRay(arm, -input);
             }
 
-            if (arm.isStepping) UpdateStep(arm);
-            else if (arm.hasLockedPoint) arm.armTarget.transform.position = arm.lockedPosition;
+            // Update stepping arms
+            if (arm.isStepping)
+            {
+                UpdateStep(arm);
+            }
+            else if (arm.hasLockedPoint)
+            {
+                // Keep arm at its locked position if not stepping
+                arm.armTarget.transform.position = arm.lockedPosition;
+            }
         }
     }
 
@@ -105,6 +122,49 @@ public class TestPlayerMovement : MonoBehaviour
             isStepping = false;
         }
     }
+
+    private int GetFarthestArmIndex(Vector2 inputDir)
+    {
+        float maxDistance = -1f;
+        int farthestIndex = -1;
+
+        for (int i = 0; i < arms.Count; i++)
+        {
+            var arm = arms[i];
+
+            // Cast ray for this arm to know where it wants to go
+            Vector3 targetPoint = arm.lockedPosition;
+            Vector3 startPos = arm.rayOrigin.position;
+            Vector3 moveDir = (transform.right * inputDir.x + transform.forward * inputDir.y).normalized;
+            if (moveDir.sqrMagnitude < 0.01f) moveDir = -transform.up;
+
+            float velocity = 2f;
+            Vector3 gravity = Vector3.down * 9.8f;
+
+            // Predict hit point along parabola
+            for (int j = 1; j <= 25; j++)
+            {
+                float t = j * 0.1f;
+                Vector3 nextPos = startPos + moveDir * velocity * t + 0.5f * gravity * t * t;
+
+                if (Physics.Linecast(startPos, nextPos, out RaycastHit hit, arm.hitLayers))
+                {
+                    targetPoint = hit.point;
+                    break;
+                }
+            }
+
+            float dist = Vector3.Distance(arm.armTarget.transform.position, targetPoint);
+            if (dist > maxDistance && !arm.isStepping)
+            {
+                maxDistance = dist;
+                farthestIndex = i;
+            }
+        }
+
+        return farthestIndex;
+    }
+
     #endregion
 
     #region Raycasting
@@ -127,6 +187,7 @@ public class TestPlayerMovement : MonoBehaviour
 
             if (Physics.Linecast(prevPos, nextPos, out RaycastHit hit, arm.hitLayers))
             {
+                arm.currentHitPoint = hit.point;
                 HandleHit(arm, hit.point, inputDir);
                 return;
             }
@@ -139,8 +200,9 @@ public class TestPlayerMovement : MonoBehaviour
     {
         float rotationDelta = Quaternion.Angle(lastRotation, transform.rotation);
         bool rotated = rotationDelta > 1f;
-        bool isMoving = inputDir.magnitude > 0.001f;
-
+        bool isIdle = HasPlayerBeenIdle(arm, backIdle, inputDir);
+        bool isNear = IsLegNearRest(arm, restThreshold);
+        
         if (!arm.hasLockedPoint)
         {
             SetLockedPosition(arm, targetPoint);
@@ -148,7 +210,7 @@ public class TestPlayerMovement : MonoBehaviour
         }
 
         float dist = Vector3.Distance(arm.lockedPosition, targetPoint);
-        if ((dist > legDistance || rotated || (!isMoving && !arm.hasRested)) && !arm.isStepping)
+        if ((dist > legDistance || rotated || (isIdle && !arm.hasRested && shouldResetArms && !isNear)) && !arm.isStepping)
         {
             arm.oldLockedPosition = arm.armTarget.transform.position;
             SetLockedPosition(arm, targetPoint);
@@ -164,5 +226,43 @@ public class TestPlayerMovement : MonoBehaviour
         arm.hasLockedPoint = true;
         arm.armTarget.transform.position = position;
     }
+    #endregion
+
+
+    #region Helper Method
+
+    private bool HasPlayerBeenIdle(Arm arm,float timeThreshold, Vector2 inputDir)
+    {
+        if (inputDir.magnitude < 0.001f) // player not moving
+        {
+            arm.idleTimer += Time.fixedDeltaTime;
+            if (arm.idleTimer >= timeThreshold)
+                return true;
+        }
+        else
+        {
+            arm.idleTimer = 0f; // reset timer if player moves
+        }
+
+        return false;
+    }
+
+    private bool IsLegNearRest(Arm arm, float threshold)
+    {
+        return Vector3.Distance(arm.currentHitPoint, arm.lockedPosition) <= threshold;
+    }
+
+    private void OnDrawGizmos()
+    {
+        if (arms == null) return;
+
+        foreach (var arm in arms)
+        {
+            Gizmos.color = Color.blue; // current hit point
+            Gizmos.DrawWireSphere(arm.currentHitPoint, 0.1f);
+        }
+    }
+
+
     #endregion
 }

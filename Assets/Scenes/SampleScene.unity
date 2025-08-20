@@ -21128,51 +21128,42 @@ MonoBehaviour:
   stepSpeed: 5
   legDistance: 1.75
   stepHeight: 0.5
+  backIdle: 0.5
+  restThreshold: 0.5
+  shouldResetArms: 1
   arms:
   - name: Left Upper Arm
     rayOrigin: {fileID: 1500242221}
     armTarget: {fileID: 2043315697}
     armTip: {fileID: 278900129}
-    detectRadius: 0
     rayDistance: 2
-    moveSpeed: 6
     hitLayers:
       serializedVersion: 2
       m_Bits: 72
-    grabLayers:
-      serializedVersion: 2
-      m_Bits: 72
-    lockedPosition: {x: 0, y: 0, z: 0}
-    hasLockedPoint: 0
-    oldLockedPosition: {x: 0, y: 0, z: 0}
     stepT: 0
+    idleTimer: 0
+    hasLockedPoint: 0
+    hasRested: 1
     isStepping: 0
-    isOnWall: 0
-    defaultLocalPosition: {x: 0, y: 0, z: 0}
-    idleStepDone: 0
+    lockedPosition: {x: 0, y: 0, z: 0}
+    oldLockedPosition: {x: 0, y: 0, z: 0}
+    currentHitPoint: {x: 0, y: 0, z: 0}
   - name: Right Upper Arm
     rayOrigin: {fileID: 1118216351}
     armTarget: {fileID: 1794811904}
     armTip: {fileID: 1642071958}
-    detectRadius: 0
     rayDistance: 2
-    moveSpeed: 6
     hitLayers:
       serializedVersion: 2
       m_Bits: 72
-    grabLayers:
-      serializedVersion: 2
-      m_Bits: 72
-    lockedPosition: {x: 0, y: 0, z: 0}
-    hasLockedPoint: 0
-    oldLockedPosition: {x: 0, y: 0, z: 0}
     stepT: 0
+    idleTimer: 0
+    hasLockedPoint: 0
+    hasRested: 1
     isStepping: 0
-    isOnWall: 0
-    defaultLocalPosition: {x: 0, y: 0, z: 0}
-    idleStepDone: 0
-  LeftArmOnGround: 0
-  RightArmOnGround: 0
+    lockedPosition: {x: 0, y: 0, z: 0}
+    oldLockedPosition: {x: 0, y: 0, z: 0}
+    currentHitPoint: {x: 0, y: 0, z: 0}
 --- !u!114 &2030896791
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -21603,53 +21594,44 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   moveSpeed: 5
   stepSpeed: 5
-  legDistance: 1.75
+  legDistance: 1
   stepHeight: 0.5
+  backIdle: 0.5
+  restThreshold: 0.5
+  shouldResetArms: 1
   arms:
   - name: Left Upper Arm
     rayOrigin: {fileID: 1500242221}
     armTarget: {fileID: 2043315698}
     armTip: {fileID: 278900129}
-    detectRadius: 0
     rayDistance: 2
-    moveSpeed: 6
     hitLayers:
       serializedVersion: 2
       m_Bits: 72
-    grabLayers:
-      serializedVersion: 2
-      m_Bits: 72
-    lockedPosition: {x: 0, y: 0, z: 0}
-    hasLockedPoint: 0
-    oldLockedPosition: {x: 0, y: 0, z: 0}
     stepT: 0
+    idleTimer: 0
+    hasLockedPoint: 0
+    hasRested: 1
     isStepping: 0
-    isOnWall: 0
-    defaultLocalPosition: {x: 0, y: 0, z: 0}
-    idleStepDone: 0
+    lockedPosition: {x: 0, y: 0, z: 0}
+    oldLockedPosition: {x: 0, y: 0, z: 0}
+    currentHitPoint: {x: 0, y: 0, z: 0}
   - name: Right Upper Arm
     rayOrigin: {fileID: 1118216351}
     armTarget: {fileID: 1794811905}
     armTip: {fileID: 1642071958}
-    detectRadius: 0
     rayDistance: 2
-    moveSpeed: 6
     hitLayers:
       serializedVersion: 2
       m_Bits: 72
-    grabLayers:
-      serializedVersion: 2
-      m_Bits: 72
-    lockedPosition: {x: 0, y: 0, z: 0}
-    hasLockedPoint: 0
-    oldLockedPosition: {x: 0, y: 0, z: 0}
     stepT: 0
+    idleTimer: 0
+    hasLockedPoint: 0
+    hasRested: 1
     isStepping: 0
-    isOnWall: 0
-    defaultLocalPosition: {x: 0, y: 0, z: 0}
-    idleStepDone: 0
-  LeftArmOnGround: 0
-  RightArmOnGround: 0
+    lockedPosition: {x: 0, y: 0, z: 0}
+    oldLockedPosition: {x: 0, y: 0, z: 0}
+    currentHitPoint: {x: 0, y: 0, z: 0}
 --- !u!1 &2041876199
 GameObject:
   m_ObjectHideFlags: 0
@@ -67397,9 +67379,10 @@ MonoBehaviour:
   stepSpeed: 5
   legDistance: 2
   stepHeight: 0.5
+  backIdle: 1
+  restThreshold: 1
+  shouldResetArms: 1
   arms: []
-  LeftArmOnGround: 0
-  RightArmOnGround: 0
 --- !u!54 &5866666020605898238
 Rigidbody:
   m_ObjectHideFlags: 0
@@ -81674,93 +81657,74 @@ MonoBehaviour:
   stepSpeed: 5
   legDistance: 1
   stepHeight: 0.5
+  backIdle: 1
+  restThreshold: 1
+  shouldResetArms: 1
   arms:
   - name: Left Upper Arm
     rayOrigin: {fileID: 252544763}
     armTarget: {fileID: 154704897}
     armTip: {fileID: 0}
-    detectRadius: 2.6
     rayDistance: 10
-    moveSpeed: 6
     hitLayers:
       serializedVersion: 2
       m_Bits: 72
-    grabLayers:
-      serializedVersion: 2
-      m_Bits: 72
-    lockedPosition: {x: 0, y: 0, z: 0}
-    hasLockedPoint: 0
-    oldLockedPosition: {x: 0, y: 0, z: 0}
     stepT: 0
+    idleTimer: 0
+    hasLockedPoint: 0
+    hasRested: 1
     isStepping: 0
-    isOnWall: 0
-    defaultLocalPosition: {x: 0, y: 0, z: 0}
-    idleStepDone: 0
+    lockedPosition: {x: 0, y: 0, z: 0}
+    oldLockedPosition: {x: 0, y: 0, z: 0}
+    currentHitPoint: {x: 0, y: 0, z: 0}
   - name: Left Lower Arm
     rayOrigin: {fileID: 1887328230}
     armTarget: {fileID: 828600897}
     armTip: {fileID: 0}
-    detectRadius: 0
     rayDistance: 10
-    moveSpeed: 6
     hitLayers:
       serializedVersion: 2
       m_Bits: 72
-    grabLayers:
-      serializedVersion: 2
-      m_Bits: 72
-    lockedPosition: {x: 0, y: 0, z: 0}
-    hasLockedPoint: 0
-    oldLockedPosition: {x: 0, y: 0, z: 0}
     stepT: 0
+    idleTimer: 0
+    hasLockedPoint: 0
+    hasRested: 1
     isStepping: 0
-    isOnWall: 0
-    defaultLocalPosition: {x: 0, y: 0, z: 0}
-    idleStepDone: 0
+    lockedPosition: {x: 0, y: 0, z: 0}
+    oldLockedPosition: {x: 0, y: 0, z: 0}
+    currentHitPoint: {x: 0, y: 0, z: 0}
   - name: Right Upper Arm
     rayOrigin: {fileID: 2129388260}
     armTarget: {fileID: 300050567}
     armTip: {fileID: 0}
-    detectRadius: 0
     rayDistance: 10
-    moveSpeed: 6
     hitLayers:
       serializedVersion: 2
       m_Bits: 72
-    grabLayers:
-      serializedVersion: 2
-      m_Bits: 72
-    lockedPosition: {x: 0, y: 0, z: 0}
-    hasLockedPoint: 0
-    oldLockedPosition: {x: 0, y: 0, z: 0}
     stepT: 0
+    idleTimer: 0
+    hasLockedPoint: 0
+    hasRested: 1
     isStepping: 0
-    isOnWall: 0
-    defaultLocalPosition: {x: 0, y: 0, z: 0}
-    idleStepDone: 0
+    lockedPosition: {x: 0, y: 0, z: 0}
+    oldLockedPosition: {x: 0, y: 0, z: 0}
+    currentHitPoint: {x: 0, y: 0, z: 0}
   - name: Right Lower Arm
     rayOrigin: {fileID: 632022524}
     armTarget: {fileID: 1911452633}
     armTip: {fileID: 0}
-    detectRadius: 0
     rayDistance: 10
-    moveSpeed: 6
     hitLayers:
       serializedVersion: 2
       m_Bits: 72
-    grabLayers:
-      serializedVersion: 2
-      m_Bits: 72
-    lockedPosition: {x: 0, y: 0, z: 0}
-    hasLockedPoint: 0
-    oldLockedPosition: {x: 0, y: 0, z: 0}
     stepT: 0
+    idleTimer: 0
+    hasLockedPoint: 0
+    hasRested: 1
     isStepping: 0
-    isOnWall: 0
-    defaultLocalPosition: {x: 0, y: 0, z: 0}
-    idleStepDone: 0
-  LeftArmOnGround: 0
-  RightArmOnGround: 0
+    lockedPosition: {x: 0, y: 0, z: 0}
+    oldLockedPosition: {x: 0, y: 0, z: 0}
+    currentHitPoint: {x: 0, y: 0, z: 0}
 --- !u!65 &7718804880690352615
 BoxCollider:
   m_ObjectHideFlags: 0

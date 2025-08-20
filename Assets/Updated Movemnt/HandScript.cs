@@ -11,11 +11,11 @@ public class HandScript : MonoBehaviour
         {
             if(gameObject.name == "Empty")
             {
-                playerMovement.LeftArmOnGround = true;
+                //playerMovement.LeftArmOnGround = true;
             }
             else
             {
-                playerMovement.RightArmOnGround = true;
+                //playerMovement.RightArmOnGround = true;
             }
         }
     }
@@ -26,11 +26,11 @@ public class HandScript : MonoBehaviour
         {
             if (gameObject.name == "Empty")
             {
-                playerMovement.LeftArmOnGround = false;
+               // playerMovement.LeftArmOnGround = false;
             }
             else
             {
-                playerMovement.RightArmOnGround = false;
+               // playerMovement.RightArmOnGround = false;
             }
         }
     }

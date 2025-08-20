@@ -3,186 +3,266 @@ using UnityEngine;
 
 public class PlayerMovement : MonoBehaviour
 {
+    [Header("Movement Settings")]
     public float moveSpeed = 5f;
+
+    [Header("Leg Settings")]
     public float stepSpeed = 5f;
     public float legDistance = 2f;
-    public float stepHeight = 0.5f; // how high the leg lifts
+    public float stepHeight = 0.5f;
+    public float backIdle = 1f;
+    public float restThreshold = 1f;
+    public bool shouldResetArms = true;
     public List<Arm> arms;
 
-    public bool LeftArmOnGround;
-    public bool RightArmOnGround;
+
+    private bool isStepping = false;
+    private int nextLegIndex = 0;
 
     private DocInputAction action;
-    private int nextLegIndex = 0;   // keeps track of which leg steps next
-    private bool isStepping = false; // block other legs while one is stepping
+    private Quaternion lastRotation;
 
-    private Rigidbody rb;
-    private Quaternion lastRotation; //  to detect rotation
-
-    private void Awake()
-    {
-        rb = GetComponent<Rigidbody>();
-        action = new DocInputAction();
-    }
-
-    private void OnEnable()
-    {
-        action.Enable();
-    }
-
-    private void OnDisable()
-    {
-        action.Disable();
-    }
+    private void Awake() => action = new DocInputAction();
+    private void OnEnable() => action.Enable();
+    private void OnDisable() => action.Disable();
 
     private void Start()
     {
         lastRotation = transform.rotation;
+        InitializeLegs();
+    }
 
-        // Place all legs on the ground at the beginning
+    private void FixedUpdate()
+    {
+        HandleMovement();
+        UpdateLegs();
+        lastRotation = transform.rotation;
+    }
+
+    #region Initialization
+    private void InitializeLegs()
+    {
         foreach (var arm in arms)
         {
-            RaycastHit hit;
-            if (Physics.Raycast(arm.rayOrigin.position, Vector3.down, out hit, Mathf.Infinity, arm.hitLayers))
+            if (Physics.Raycast(arm.rayOrigin.position, Vector3.down, out RaycastHit hit, Mathf.Infinity, arm.hitLayers))
             {
                 arm.lockedPosition = hit.point;
                 arm.oldLockedPosition = hit.point;
                 arm.hasLockedPoint = true;
                 arm.isStepping = false;
-                arm.stepT = 1f; // fully completed step
+                arm.stepT = 1f;
                 arm.armTarget.transform.position = hit.point;
+                arm.hasRested = true;
             }
         }
     }
+    #endregion
 
-    private void FixedUpdate()
+    #region Movement
+    private void HandleMovement()
     {
-        Move();
+        Vector2 input = action.Movement.Move.ReadValue<Vector2>();
+        Vector3 move = (transform.right * -input.x + transform.forward * -input.y) * moveSpeed * Time.fixedDeltaTime;
+        transform.position += move;
 
-        //FindPlayerPos(arms[0], arms[1]);
+        if (move.sqrMagnitude > 0.001f)
+        {
+            foreach (var arm in arms)
+                arm.hasRested = false;
+        }
+    }
+    #endregion
+
+    #region Leg Logic
+    private void UpdateLegs()
+    {
+        Vector2 input = action.Movement.Move.ReadValue<Vector2>();
+
+        // Find the arm that is farthest from where it wants to go
+        int farthestArmIndex = GetFarthestArmIndex(-input);
 
         for (int i = 0; i < arms.Count; i++)
         {
             var arm = arms[i];
 
-            // Only update the leg that's supposed to step
-            if (i == nextLegIndex)
+            // Only the farthest arm will try to step
+            if (i == farthestArmIndex && !isStepping)
             {
-                Vector2 input = action.Movement.Move.ReadValue<Vector2>();
                 CastParabolaRay(arm, -input);
             }
 
+            // Update stepping arms
             if (arm.isStepping)
             {
-                isStepping = true;
-
-                // Progress step
-                arm.stepT += Time.fixedDeltaTime * stepSpeed;
-                float t = Mathf.Clamp01(arm.stepT);
-
-                Vector3 pos = Vector3.Lerp(arm.oldLockedPosition, arm.lockedPosition, t);
-
-                // Add arc on Y
-                float arc = Mathf.Sin(t * Mathf.PI) * stepHeight;
-                pos.y += arc;
-
-                arm.armTarget.transform.position = pos;
-
-                if (t >= 1f)
-                {
-                    // Step finished  snap to ground
-                    arm.armTarget.transform.position = arm.lockedPosition;
-                    arm.isStepping = false;
-
-                    // Move to the next leg in round-robin order
-                    nextLegIndex = (nextLegIndex + 1) % arms.Count;
-
-                    // NEW: choose dynamically
-                    //nextLegIndex = GetNextLegIndex();
-
-                    isStepping = false;
-                }
+                UpdateStep(arm);
             }
             else if (arm.hasLockedPoint)
             {
-                // Keep foot pinned when not stepping
+                // Keep arm at its locked position if not stepping
                 arm.armTarget.transform.position = arm.lockedPosition;
             }
         }
-
-        // update rotation tracker
-        lastRotation = transform.rotation;
     }
 
-    private void Move()
+    private void UpdateStep(Arm arm)
     {
-        Vector2 input = action.Movement.Move.ReadValue<Vector2>(); // Movement direction relative to player facing
-        Vector3 move = (transform.right * -input.x + transform.forward * -input.y) * moveSpeed * Time.fixedDeltaTime; // Apply movement
-        transform.position += move;
+        isStepping = true;
+        arm.stepT += Time.fixedDeltaTime * stepSpeed;
+        float t = Mathf.Clamp01(arm.stepT);
+
+        Vector3 pos = Vector3.Lerp(arm.oldLockedPosition, arm.lockedPosition, t);
+        pos.y += Mathf.Sin(t * Mathf.PI) * stepHeight;
+        arm.armTarget.transform.position = pos;
+
+        if (t >= 1f)
+        {
+            arm.armTarget.transform.position = arm.lockedPosition;
+            arm.isStepping = false;
+            nextLegIndex = (nextLegIndex + 1) % arms.Count;
+            isStepping = false;
+        }
     }
+
+    private int GetFarthestArmIndex(Vector2 inputDir)
+    {
+        float maxDistance = -1f;
+        int farthestIndex = -1;
+
+        for (int i = 0; i < arms.Count; i++)
+        {
+            var arm = arms[i];
+
+            // Cast ray for this arm to know where it wants to go
+            Vector3 targetPoint = arm.lockedPosition;
+            Vector3 startPos = arm.rayOrigin.position;
+            Vector3 moveDir = (transform.right * inputDir.x + transform.forward * inputDir.y).normalized;
+            if (moveDir.sqrMagnitude < 0.01f) moveDir = -transform.up;
+
+            float velocity = 2f;
+            Vector3 gravity = Vector3.down * 9.8f;
+
+            // Predict hit point along parabola
+            for (int j = 1; j <= 25; j++)
+            {
+                float t = j * 0.1f;
+                Vector3 nextPos = startPos + moveDir * velocity * t + 0.5f * gravity * t * t;
+
+                if (Physics.Linecast(startPos, nextPos, out RaycastHit hit, arm.hitLayers))
+                {
+                    targetPoint = hit.point;
+                    break;
+                }
+            }
+
+            float dist = Vector3.Distance(arm.armTarget.transform.position, targetPoint);
+            if (dist > maxDistance && !arm.isStepping)
+            {
+                maxDistance = dist;
+                farthestIndex = i;
+            }
+        }
+
+        return farthestIndex;
+    }
+
+    #endregion
+
+    #region Raycasting
     private void CastParabolaRay(Arm arm, Vector2 inputDir)
     {
-        if (isStepping) return;
-
         Vector3 startPos = arm.rayOrigin.position;
-
-        // Convert input (x,y) into world direction relative to the player
         Vector3 moveDir = (transform.right * inputDir.x + transform.forward * inputDir.y).normalized;
+        if (moveDir.sqrMagnitude < 0.01f) moveDir = -transform.up;
 
-        // If no input, just use forward
-        if (moveDir.sqrMagnitude < 0.01f)
-            moveDir = -transform.up;
-
-        float velocity = 2f;               // "throw strength"
-        Vector3 gravity = Vector3.down * 9.8f; // arc downward pull
-
-        int steps = 25;        // number of arc samples
-        float stepSize = 0.1f; // time step per sample
+        float velocity = 2f;
+        Vector3 gravity = Vector3.down * 9.8f;
 
         Vector3 prevPos = startPos;
-
-        for (int i = 1; i <= steps; i++)
+        for (int i = 1; i <= 25; i++)
         {
-            float t = i * stepSize;
+            float t = i * 0.1f;
+            Vector3 nextPos = startPos + moveDir * velocity * t + 0.5f * gravity * t * t;
 
-            // parabola in movement direction
-            Vector3 nextPos = startPos + moveDir * velocity * t + 0.5f * gravity * (t * t);
+            Debug.DrawLine(prevPos, nextPos, Color.cyan);
 
-            Debug.DrawLine(prevPos, nextPos, Color.cyan); // show arc
-
-            // collision check between points
             if (Physics.Linecast(prevPos, nextPos, out RaycastHit hit, arm.hitLayers))
             {
-                HandleHit(arm, hit.point, hit.normal);
+                arm.currentHitPoint = hit.point;
+                HandleHit(arm, hit.point, inputDir);
                 return;
             }
 
             prevPos = nextPos;
         }
     }
-    private void HandleHit(Arm arm, Vector3 targetPoint, Vector3 normal)
+
+    private void HandleHit(Arm arm, Vector3 targetPoint, Vector2 inputDir)
     {
+        float rotationDelta = Quaternion.Angle(lastRotation, transform.rotation);
+        bool rotated = rotationDelta > 1f;
+        bool isIdle = HasPlayerBeenIdle(arm, backIdle, inputDir);
+        bool isNear = IsLegNearRest(arm, restThreshold);
+
         if (!arm.hasLockedPoint)
         {
-            arm.lockedPosition = targetPoint;
-            arm.oldLockedPosition = targetPoint;
-            arm.hasLockedPoint = true;
-            arm.armTarget.transform.position = targetPoint;
+            SetLockedPosition(arm, targetPoint);
+            return;
         }
-        else
-        {
-            float dist = Vector3.Distance(arm.lockedPosition, targetPoint);
-            float rotationDelta = Quaternion.Angle(lastRotation, transform.rotation);
-            bool rotated = rotationDelta > 1f;
 
-            if ((dist > legDistance || rotated) && !arm.isStepping)
-            {
-                arm.oldLockedPosition = arm.armTarget.transform.position;
-                arm.lockedPosition = targetPoint;
-                arm.stepT = 0f;
-                arm.isStepping = true;
-            }
+        float dist = Vector3.Distance(arm.lockedPosition, targetPoint);
+        if ((dist > legDistance || rotated || (isIdle && !arm.hasRested && shouldResetArms && !isNear)) && !arm.isStepping)
+        {
+            arm.oldLockedPosition = arm.armTarget.transform.position;
+            SetLockedPosition(arm, targetPoint);
+            arm.stepT = 0f;
+            arm.isStepping = true;
+            arm.hasRested = true;
         }
     }
 
+    private void SetLockedPosition(Arm arm, Vector3 position)
+    {
+        arm.lockedPosition = position;
+        arm.hasLockedPoint = true;
+        arm.armTarget.transform.position = position;
+    }
+    #endregion
+
+
+    #region Helper Method
+
+    private bool HasPlayerBeenIdle(Arm arm, float timeThreshold, Vector2 inputDir)
+    {
+        if (inputDir.magnitude < 0.001f) // player not moving
+        {
+            arm.idleTimer += Time.fixedDeltaTime;
+            if (arm.idleTimer >= timeThreshold)
+                return true;
+        }
+        else
+        {
+            arm.idleTimer = 0f; // reset timer if player moves
+        }
+
+        return false;
+    }
+
+    private bool IsLegNearRest(Arm arm, float threshold)
+    {
+        return Vector3.Distance(arm.currentHitPoint, arm.lockedPosition) <= threshold;
+    }
+
+    private void OnDrawGizmos()
+    {
+        if (arms == null) return;
+
+        foreach (var arm in arms)
+        {
+            Gizmos.color = Color.blue; // current hit point
+            Gizmos.DrawWireSphere(arm.currentHitPoint, 0.1f);
+        }
+    }
+
+
+    #endregion
 }
