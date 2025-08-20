@@ -1,0 +1,2 @@
+# Doctor-Oct-Tentacle-Player-Procedural-Animation-Controller-
+Tentacle Player – Procedural Animation Controller A Unity project featuring a tentacle-based player character driven entirely through procedural animation. Instead of relying on traditional keyframed movement, the player’s motion is dynamically calculated in real-time, allowing for fluid, organic, and adaptive interactions with the environment.
