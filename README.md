@@ -7,33 +7,16 @@ Instead of relying on traditional keyframed movement, the player’s motion is d
 👉 Current Stage: Tentacle locomotion is focused only on walking across terrain.
 👉 Next Stage (Planned): Expand the system to support wall climbing and obstacle traversal using procedural tentacle anchors.
 
-✨ Features
+✨ Features :-
+1) Procedural Tentacle Locomotion - Each tentacle finds its own anchor point in the environment and moves dynamically, adapting to uneven terrain.
+2) Step Prediction with Physics Rays - Tentacles cast parabolic raycasts to predict where they should grab, mimicking realistic step placement.
+3) Idle & Rest System - Tentacles reset naturally when the player is idle, maintaining a grounded and believable pose.
+4) Adaptive Movement - Tentacle movement responds directly to player input (WASD/joystick) while maintaining balance.
+5) Real-Time Foot Placement - No animations are baked — steps are generated on-the-fly depending on movement speed, terrain, and rotation.
+6) Debug Gizmos - Visualize hit points and tentacle placement in the Unity editor for easier development & tuning.
 
-Procedural Tentacle Locomotion
-Each tentacle finds its own anchor point in the environment and moves dynamically, adapting to uneven terrain.
-
-Step Prediction with Physics Rays
-Tentacles cast parabolic raycasts to predict where they should grab, mimicking realistic step placement.
-
-Idle & Rest System
-Tentacles reset naturally when the player is idle, maintaining a grounded and believable pose.
-
-Adaptive Movement
-Tentacle movement responds directly to player input (WASD/joystick) while maintaining balance.
-
-Real-Time Foot Placement
-No animations are baked — steps are generated on-the-fly depending on movement speed, terrain, and rotation.
-
-Debug Gizmos
-Visualize hit points and tentacle placement in the Unity editor for easier development & tuning.
-
-
-Future Improvements
-
-Add inverse kinematics (IK) for smoother tentacle bending.
-
-Procedural climbing system using tentacle anchors.
-
-Support for VR controllers as tentacle inputs.
-
-Physics-based grabbing and object interaction.
+🔮 Future Improvements :-
+1) Add inverse kinematics (IK) for smoother tentacle bending.
+2) Procedural climbing system using tentacle anchors.
+3) Support for VR controllers as tentacle inputs.
+4) Physics-based grabbing and object interaction.
